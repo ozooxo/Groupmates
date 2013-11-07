@@ -1,4 +1,4 @@
-module Groupmates (groupNoScore, groupScore) where
+module Groupmates where -- (groupNoScore, groupScore) where
 
 import Data.List
 import Data.Map
@@ -18,14 +18,21 @@ oldMember x (y:ys)
 	| elem x y = mergeUnique y (oldMember x ys)
 	| otherwise = (oldMember x ys)
 
+neverMeetBefore :: Ord a => [a] -> [[a]] -> Bool
+neverMeetBefore gp [] = True
+neverMeetBefore gp (x:xs)
+	| length (intersect gp x) >= 2 = False
+	| otherwise = neverMeetBefore gp xs
+
 neverList :: Ord a => [a] -> [[a]] -> [[a]]
 neverList students groups = [sort(x:(deleteAll (oldMember x sortedGroups) students)) | x <- students]
 	where sortedGroups = sortNested groups
 
 possibleGroups :: Ord a => [a] -> [[a]] -> Int -> [[a]]
-possibleGroups students groups n = groupn ++ groupnpp
-	where groupn = apriori (neverList students groups) n n
-	      groupnpp = apriori (neverList students groups) (n-1) (n-1)
+possibleGroups students groups n = [x | x <- (groupn ++ groupnpp), neverMeetBefore x groups]
+	where neverLists = (neverList students groups)
+	      groupn = apriori neverLists n n
+	      groupnpp = apriori neverLists (n-1) (n-1)
 
 groupFit :: Ord a => [a] -> [[a]] -> [[[a]]]
 groupFit _ [] = []
